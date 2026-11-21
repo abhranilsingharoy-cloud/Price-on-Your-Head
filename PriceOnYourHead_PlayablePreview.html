@@ -226,10 +226,10 @@ laser1.rotation.z = Math.PI / 2;
 laser1.position.set(0, 1.2, 8);
 scene.add(laser1);
 
-// Escape Skiff
-const skiffMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x006633 });
-const skiff = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 10), skiffMat);
-skiff.position.set(12, 0, -32);
+// Escape Skiff (Positioned right at the deck boarding ramp)
+const skiffMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x008844 });
+const skiff = new THREE.Mesh(new THREE.BoxGeometry(8, 1.4, 10), skiffMat);
+skiff.position.set(10, 0.2, -28.5);
 scene.add(skiff);
 
 // High-Detail Futuristic Security Drone Builder
@@ -700,8 +700,15 @@ function animate() {
 
     // Extraction Skiff Win Check
     const distToSkiff = Math.hypot(player.position.x - skiff.position.x, player.position.z - skiff.position.z);
-    if (distToSkiff < 4.5 && hasLotOne) {
-      endGame(true, "HEIST SUCCESSFUL // ESCAPED WITH LOT ONE!");
+    if (distToSkiff < 8.5 && hasLotOne) {
+      document.getElementById('obj-card').innerText = "PRESS [E] OR STEP ON SKIFF TO ESCAPE!";
+      document.getElementById('obj-card').style.borderColor = "#00ff88";
+      document.getElementById('obj-card').style.color = "#00ff88";
+      
+      // Escape triggers on stepping onto the skiff or pressing E!
+      if (distToSkiff < 6.0 || keys.e) {
+        endGame(true, "HEIST SUCCESSFUL // ESCAPED WITH LOT ONE!");
+      }
     }
   }
 
