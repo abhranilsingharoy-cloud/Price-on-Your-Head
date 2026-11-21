@@ -87,8 +87,9 @@
     • <b>WASD</b> to move | <b>CTRL</b> to crouch under lasers and dodge drones<br>
     • <b>E</b> to steal Lot One (Billionaire's Frozen Head) from the central plinth<br>
     • <b>Q</b> to start a Bidding War with your decoy paddle (blinds drones for 4s)<br>
+    • <b>F</b> to toggle Fullscreen (best for clean 1080p recording)<br>
     • Escape via the <b>Green Skiff</b> at the bow before the final gavel strikes!</p>
-    <button class="btn" id="start-btn">INFILTRATE BARGE</button>
+    <button class="btn" id="start-btn">INFILTRATE BARGE (FULLSCREEN)</button>
   </div>
 </div>
 
@@ -297,8 +298,26 @@ let biddingWarTimer = 0;
 document.getElementById('start-btn').addEventListener('click', () => {
   initAudio();
   playGavel();
+  try {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    }
+  } catch(err) {}
   document.getElementById('modal').style.display = 'none';
   gameState = 'playing';
+});
+
+window.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'f') {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+  if (e.key.toLowerCase() === 'r' && gameState !== 'playing') {
+    location.reload();
+  }
 });
 
 function triggerDecoyPaddle() {
