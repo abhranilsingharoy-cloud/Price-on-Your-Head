@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Price on Your Head - Playable 3D Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body { background: #050811; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+  #canvas-container { width: 100%; height: 100%; position: absolute; left: 0; top: 0; }
+  
+  /* HUD Overlay */
+  #hud { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  .card { position: absolute; background: rgba(5, 12, 25, 0.88); border: 2px solid #00d2ff; padding: 12px 20px; border-radius: 4px; box-shadow: 0 0 15px rgba(0, 210, 255, 0.25); }
+  
+  #timer-card { left: 40px; top: 40px; border-color: #ff3344; min-width: 180px; }
+  #timer-card .label { font-size: 11px; font-weight: 700; color: #ff5566; letter-spacing: 1.5px; }
+  #timer-card .val { font-size: 32px; font-weight: 800; color: #fff; font-family: monospace; }
+  
+  #haul-card { right: 40px; top: 40px; border-color: #00e5ff; min-width: 220px; text-align: right; }
+  #haul-card .label { font-size: 11px; font-weight: 700; color: #00d2ff; letter-spacing: 1.5px; }
+  #haul-card .val { font-size: 32px; font-weight: 800; color: #fff; font-family: monospace; }
+  
+  #obj-card { left: 50%; top: 40px; transform: translateX(-50%); border-color: #ffd700; padding: 8px 24px; font-weight: 700; letter-spacing: 2px; color: #ffe066; font-size: 14px; background: rgba(10, 15, 30, 0.9); }
+  
+  #bounty-tag { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); color: #00ffff; font-weight: 800; font-family: monospace; font-size: 18px; text-shadow: 0 0 10px #00ffff; display: none; }
+  
+  #radar-card { left: 40px; bottom: 40px; width: 160px; height: 160px; padding: 0; border-radius: 50%; overflow: hidden; background: rgba(3, 8, 18, 0.92); border: 2px solid #00d2ff; }
+  #radar-canvas { width: 100%; height: 100%; }
+  
+  #keys-card { right: 40px; bottom: 40px; display: flex; gap: 6px; }
+  .key-box { width: 34px; height: 34px; background: rgba(15, 25, 45, 0.8); border: 1px solid #0088aa; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #aaa; border-radius: 3px; }
+  .key-box.active { background: #00ff88; color: #000; border-color: #00ff88; box-shadow: 0 0 12px #00ff88; }
+  .key-box.wide { width: 52px; }
+
+  #alert-banner { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); background: rgba(220, 20, 40, 0.9); color: #fff; font-weight: 800; padding: 10px 30px; letter-spacing: 2px; border: 2px solid #fff; border-radius: 4px; display: none; }
+
+  /* Modal Screens */
+  #modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(3, 6, 14, 0.95); display: flex; align-items: center; justify-content: center; z-index: 999; }
+  .modal-box { background: #07101f; border: 2px solid #00d2ff; padding: 40px 50px; max-width: 650px; text-align: center; border-radius: 6px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.3); }
+  .modal-box h1 { font-size: 34px; color: #00d2ff; letter-spacing: 3px; margin-bottom: 15px; }
+  .modal-box p { font-size: 15px; line-height: 1.6; color: #bccadb; margin-bottom: 25px; }
+  .btn { display: inline-block; background: #00d2ff; color: #000; font-weight: 800; font-size: 16px; padding: 14px 35px; border-radius: 4px; cursor: pointer; letter-spacing: 2px; border: none; transition: all 0.2s; }
+  .btn:hover { background: #55eeff; transform: scale(1.04); box-shadow: 0 0 20px #00d2ff; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div id="timer-card" class="card">
+    <div class="label">GAVEL COUNTDOWN</div>
+    <div class="val" id="timer-text">01:30</div>
+  </div>
+  
+  <div id="obj-card" class="card">STEAL LOT ONE & REACH SKIFF</div>
+  
+  <div id="haul-card" class="card">
+    <div class="label">TOTAL HAUL VALUE</div>
+    <div class="val" id="haul-text">$0</div>
+  </div>
+  
+  <div id="alert-banner">BIDDING WAR ACTIVE // DRONES BLINDED</div>
+  
+  <div id="bounty-tag">PRICE: $1,000,000</div>
+  
+  <div id="radar-card" class="card">
+    <canvas id="radar-canvas" width="160" height="160"></canvas>
+  </div>
+  
+  <div id="keys-card">
+    <div class="key-box" id="key-w">W</div>
+    <div class="key-box" id="key-a">A</div>
+    <div class="key-box" id="key-s">S</div>
+    <div class="key-box" id="key-d">D</div>
+    <div class="key-box wide" id="key-ctrl">CTRL</div>
+    <div class="key-box" id="key-e">E</div>
+    <div class="key-box" id="key-q">Q</div>
+  </div>
+</div>
+
+<div id="modal">
+  <div class="modal-box" id="start-modal">
+    <h1>PRICE ON YOUR HEAD</h1>
+    <p>You are an auction porter infiltrating a black-market floating barge in the flooded district.<br><br>
+    • <b>WASD</b> to move | <b>CTRL</b> to crouch under lasers and dodge drones<br>
+    • <b>E</b> to steal Lot One (Billionaire's Frozen Head) from the central plinth<br>
+    • <b>Q</b> to start a Bidding War with your decoy paddle (blinds drones for 4s)<br>
+    • Escape via the <b>Green Skiff</b> at the bow before the final gavel strikes!</p>
+    <button class="btn" id="start-btn">INFILTRATE BARGE</button>
+  </div>
+</div>
+
+<script>
+// --- Web Audio Synthesizer ---
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playGavel() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+}
+
+function playPickup() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function playAlarm() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(750, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+}
+
+// --- Three.js Scene Setup ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060c18);
+scene.fog = new THREE.FogExp2(0x060c18, 0.015);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0x102540, 1.2);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0x00d2ff, 1.5);
+dirLight.position.set(30, 50, 20);
+scene.add(dirLight);
+
+const redAccent = new THREE.PointLight(0xff2244, 2, 40);
+redAccent.position.set(0, 15, -20);
+scene.add(redAccent);
+
+// Barge Deck Floor
+const deckGeo = new THREE.BoxGeometry(40, 1, 60);
+const deckMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
+const deck = new THREE.Mesh(deckGeo, deckMat);
+deck.position.y = -0.5;
+scene.add(deck);
+
+// Flooded Water Plane
+const waterGeo = new THREE.PlaneGeometry(200, 200);
+const waterMat = new THREE.MeshStandardMaterial({ color: 0x051525, roughness: 0.1, metalness: 0.9 });
+const water = new THREE.Mesh(waterGeo, waterMat);
+water.rotation.x = -Math.PI / 2;
+water.position.y = -0.8;
+scene.add(water);
+
+// Railings
+const railMat = new THREE.MeshStandardMaterial({ color: 0x00a8cc, emissive: 0x004466 });
+function addRail(x, z, w, d) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1.2, d), railMat);
+  mesh.position.set(x, 0.6, z);
+  scene.add(mesh);
+}
+addRail(-19.5, 0, 1, 60);
+addRail(19.5, 0, 1, 60);
+addRail(0, 29.5, 40, 1);
+addRail(-10, -29.5, 20, 1); // Opening for skiff at +Z
+
+// Plinths
+const plinthMat = new THREE.MeshStandardMaterial({ color: 0x220b38, roughness: 0.8 });
+const plinths = [];
+
+function createPlinth(x, z, isLotOne, val) {
+  const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 1.8, 8), plinthMat);
+  pMesh.position.set(x, 0.9, z);
+  scene.add(pMesh);
+
+  // Lot item
+  const itemGeo = isLotOne ? new THREE.CylinderGeometry(0.8, 0.8, 2.0, 16) : new THREE.SphereGeometry(0.8, 12, 12);
+  const itemMat = new THREE.MeshStandardMaterial({
+    color: isLotOne ? 0x00ffff : 0xffaa00,
+    emissive: isLotOne ? 0x0088aa : 0xaa5500,
+    roughness: 0.2
+  });
+  const item = new THREE.Mesh(itemGeo, itemMat);
+  item.position.set(x, 2.5, z);
+  scene.add(item);
+
+  plinths.push({ x, z, isLotOne, val, mesh: item, taken: false });
+}
+
+createPlinth(0, 0, true, 1000000);   // Lot One Center
+createPlinth(-10, 12, false, 250000); // Bonus A
+createPlinth(10, 12, false, 250000);  // Bonus B
+createPlinth(-10, -12, false, 350000);// Bonus C
+createPlinth(10, -12, false, 400000); // Bonus D
+
+// Laser Tripwires
+const laserMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+const laserGeo = new THREE.CylinderGeometry(0.04, 0.04, 18, 8);
+const laser1 = new THREE.Mesh(laserGeo, laserMat);
+laser1.rotation.z = Math.PI / 2;
+laser1.position.set(0, 1.2, 8);
+scene.add(laser1);
+
+// Escape Skiff
+const skiffMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x006633 });
+const skiff = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 10), skiffMat);
+skiff.position.set(12, 0, -32);
+scene.add(skiff);
+
+// Drones
+const droneMat = new THREE.MeshStandardMaterial({ color: 0xff3344, emissive: 0x880011 });
+const drones = [
+  { mesh: new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat), x: -12, z: 5, dir: 1, speed: 8 },
+  { mesh: new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat), x: 12, z: -5, dir: -1, speed: 7 }
+];
+drones.forEach(d => {
+  d.mesh.position.set(d.x, 3.5, d.z);
+  scene.add(d.mesh);
+  const spot = new THREE.SpotLight(0xff3344, 4, 20, Math.PI / 4, 0.5);
+  spot.position.set(0, 0, 0);
+  spot.target.position.set(0, -5, 0);
+  d.mesh.add(spot);
+  d.mesh.add(spot.target);
+  d.spot = spot;
+});
+
+// Player Character
+const playerGeo = new THREE.CylinderGeometry(0.8, 0.8, 2.4, 12);
+const playerMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.4 });
+const player = new THREE.Mesh(playerGeo, playerMat);
+player.position.set(0, 1.2, 22);
+scene.add(player);
+
+// Input States
+const keys = { w: false, a: false, s: false, d: false, ctrl: false, e: false, q: false };
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'w') keys.w = true;
+  if (k === 'a') keys.a = true;
+  if (k === 's') keys.s = true;
+  if (k === 'd') keys.d = true;
+  if (e.key === 'Control') keys.ctrl = true;
+  if (k === 'e') keys.e = true;
+  if (k === 'q') triggerDecoyPaddle();
+  updateKeyUI();
+});
+window.addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'w') keys.w = false;
+  if (k === 'a') keys.a = false;
+  if (k === 's') keys.s = false;
+  if (k === 'd') keys.d = false;
+  if (e.key === 'Control') keys.ctrl = false;
+  if (k === 'e') keys.e = false;
+  updateKeyUI();
+});
+
+function updateKeyUI() {
+  document.getElementById('key-w').classList.toggle('active', keys.w);
+  document.getElementById('key-a').classList.toggle('active', keys.a);
+  document.getElementById('key-s').classList.toggle('active', keys.s);
+  document.getElementById('key-d').classList.toggle('active', keys.d);
+  document.getElementById('key-ctrl').classList.toggle('active', keys.ctrl);
+  document.getElementById('key-e').classList.toggle('active', keys.e);
+}
+
+// Game State
+let gameState = 'ready'; // ready, playing, won, lost
+let timeLeft = 90.0;
+let totalHaul = 0;
+let hasLotOne = false;
+let biddingWarTimer = 0;
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  initAudio();
+  playGavel();
+  document.getElementById('modal').style.display = 'none';
+  gameState = 'playing';
+});
+
+function triggerDecoyPaddle() {
+  if (gameState !== 'playing') return;
+  biddingWarTimer = 4.0;
+  playAlarm();
+  document.getElementById('alert-banner').style.display = 'block';
+  drones.forEach(d => d.spot.color.setHex(0xffaa00));
+}
+
+// Radar Canvas
+const radarCanvas = document.getElementById('radar-canvas');
+const rCtx = radarCanvas.getContext('2d');
+
+function drawRadar() {
+  rCtx.clearRect(0, 0, 160, 160);
+  const cx = 80, cy = 80;
+  
+  // Crosshairs
+  rCtx.strokeStyle = 'rgba(0, 210, 255, 0.3)';
+  rCtx.beginPath();
+  rCtx.moveTo(0, cy); rCtx.lineTo(160, cy);
+  rCtx.moveTo(cx, 0); rCtx.lineTo(cx, 160);
+  rCtx.stroke();
+  
+  // Player
+  rCtx.fillStyle = '#00ff88';
+  rCtx.beginPath(); rCtx.arc(cx, cy, 4, 0, Math.PI * 2); rCtx.fill();
+  
+  // Plinths
+  plinths.forEach(p => {
+    if (!p.taken) {
+      rCtx.fillStyle = p.isLotOne ? '#ff3344' : '#ffd700';
+      const rx = cx + (p.x - player.position.x) * 2.2;
+      const ry = cy + (p.z - player.position.z) * 2.2;
+      rCtx.fillRect(rx - 3, ry - 3, 6, 6);
+    }
+  });
+
+  // Skiff
+  rCtx.fillStyle = '#00ffff';
+  const sx = cx + (skiff.position.x - player.position.x) * 2.2;
+  const sy = cy + (skiff.position.z - player.position.z) * 2.2;
+  rCtx.fillRect(sx - 4, sy - 4, 8, 8);
+}
+
+// Main Game Loop
+let lastTime = performance.now();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const delta = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime = now;
+
+  if (gameState === 'playing') {
+    // Timer
+    timeLeft -= delta;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      endGame(false, "FINAL GAVEL STRUCK // TIME EXPIRED");
+    }
+    const mins = Math.floor(timeLeft / 60);
+    const secs = Math.floor(timeLeft % 60);
+    document.getElementById('timer-text').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    // Bidding War decay
+    if (biddingWarTimer > 0) {
+      biddingWarTimer -= delta;
+      if (biddingWarTimer <= 0) {
+        document.getElementById('alert-banner').style.display = 'none';
+        drones.forEach(d => d.spot.color.setHex(0xff3344));
+      }
+    }
+
+    // Player Movement
+    const speed = keys.ctrl ? 6 : 14;
+    player.scale.y = keys.ctrl ? 0.6 : 1.0;
+    player.position.y = keys.ctrl ? 0.7 : 1.2;
+
+    if (keys.w) player.position.z -= speed * delta;
+    if (keys.s) player.position.z += speed * delta;
+    if (keys.a) player.position.x -= speed * delta;
+    if (keys.d) player.position.x += speed * delta;
+
+    player.position.x = Math.max(-18, Math.min(18, player.position.x));
+    player.position.z = Math.max(-28, Math.min(28, player.position.z));
+
+    // Laser Tripwire overlap check
+    if (!keys.ctrl && Math.abs(player.position.z - 8) < 1.0 && Math.abs(player.position.x) < 9) {
+      playAlarm();
+    }
+
+    // Interactive Plinth Grab
+    if (keys.e) {
+      plinths.forEach(p => {
+        if (!p.taken) {
+          const dist = Math.hypot(player.position.x - p.x, player.position.z - p.z);
+          if (dist < 3.2) {
+            p.taken = true;
+            p.mesh.visible = false;
+            totalHaul += p.val;
+            playPickup();
+            if (p.isLotOne) {
+              hasLotOne = true;
+              document.getElementById('obj-card').innerText = "ESCAPE VIA SKIFF AT BOW";
+              document.getElementById('bounty-tag').style.display = 'block';
+            }
+            document.getElementById('haul-text').innerText = `$${totalHaul.toLocaleString()}`;
+          }
+        }
+      });
+    }
+
+    // Drones Patrol & Detection
+    drones.forEach(d => {
+      d.z += d.speed * d.dir * delta;
+      if (d.z > 20 || d.z < -20) d.dir *= -1;
+      d.mesh.position.z = d.z;
+
+      // Detection
+      if (biddingWarTimer <= 0) {
+        const dist = Math.hypot(player.position.x - d.x, player.position.z - d.z);
+        const detectionRange = (hasLotOne ? 14 : 7) * (keys.ctrl ? 0.55 : 1.0);
+        if (dist < detectionRange) {
+          d.spot.color.setHex(0xff0000);
+          if (dist < 3.0) {
+            endGame(false, "PINNED BY SECURITY DRONES!");
+          }
+        } else {
+          d.spot.color.setHex(0xff3344);
+        }
+      }
+    });
+
+    // Extraction Skiff Win Check
+    const distToSkiff = Math.hypot(player.position.x - skiff.position.x, player.position.z - skiff.position.z);
+    if (distToSkiff < 4.5 && hasLotOne) {
+      endGame(true, "HEIST SUCCESSFUL // ESCAPED WITH LOT ONE!");
+    }
+  }
+
+  // Camera Follow
+  camera.position.x = player.position.x;
+  camera.position.y = player.position.y + 12;
+  camera.position.z = player.position.z + 18;
+  camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+
+  drawRadar();
+  renderer.render(scene, camera);
+}
+
+function endGame(won, reason) {
+  gameState = won ? 'won' : 'lost';
+  const modal = document.getElementById('modal');
+  const box = document.getElementById('start-modal');
+  const medal = totalHaul >= 1500000 && (90 - timeLeft) <= 65 ? 'GOLD MEDAL' : (totalHaul >= 1000000 ? 'SILVER MEDAL' : 'BRONZE MEDAL');
+  
+  box.innerHTML = `
+    <h1 style="color: ${won ? '#00ff88' : '#ff3344'}">${won ? 'HEIST COMPLETED' : 'MISSION FAILED'}</h1>
+    <p><b>${reason}</b><br><br>
+    ${won ? `<b>Rank: ${medal}</b><br>Final Score: $${totalHaul.toLocaleString()}<br>Escape Time: ${(90 - timeLeft).toFixed(1)}s` : 'You were detected or ran out of time.'}</p>
+    <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+  `;
+  modal.style.display = 'flex';
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
+</script>
+</body>
+</html>
