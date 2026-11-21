@@ -75,7 +75,7 @@
     <div class="key-box" id="key-a">A</div>
     <div class="key-box" id="key-s">S</div>
     <div class="key-box" id="key-d">D</div>
-    <div class="key-box wide" id="key-ctrl">CTRL</div>
+    <div class="key-box wide" id="key-ctrl">C / CTRL</div>
     <div class="key-box" id="key-e">E</div>
     <div class="key-box" id="key-q">Q</div>
   </div>
@@ -85,7 +85,8 @@
   <div class="modal-box" id="start-modal">
     <h1>PRICE ON YOUR HEAD</h1>
     <p>You are an auction porter infiltrating a black-market floating barge in the flooded district.<br><br>
-    • <b>WASD</b> to move | <b>CTRL</b> to crouch under lasers and dodge drones<br>
+    • <b>WASD</b> to move | <b>C</b> or <b>CTRL</b> to crouch under lasers and dodge drones<br>
+    • <i>(Tip: Use <b>C</b> to crouch so your browser doesn't close on Ctrl+W!)</i><br>
     • <b>E</b> to steal Lot One (Billionaire's Frozen Head) from the central plinth<br>
     • <b>Q</b> to start a Bidding War with your decoy paddle (blinds drones for 4s)<br>
     • <b>F</b> to toggle Fullscreen (best for clean 1080p recording)<br>
@@ -296,9 +297,14 @@ window.addEventListener('keydown', e => {
   if (k === 'a') keys.a = true;
   if (k === 's') keys.s = true;
   if (k === 'd') keys.d = true;
-  if (e.key === 'Control') keys.ctrl = true;
+  if (e.key === 'Control' || k === 'c') keys.ctrl = true;
   if (k === 'e') keys.e = true;
   if (k === 'q') triggerDecoyPaddle();
+  
+  // Prevent browser Ctrl+W tab close
+  if ((e.ctrlKey || e.metaKey) && (k === 'w' || k === 's')) {
+    e.preventDefault();
+  }
   updateKeyUI();
 });
 window.addEventListener('keyup', e => {
@@ -307,7 +313,7 @@ window.addEventListener('keyup', e => {
   if (k === 'a') keys.a = false;
   if (k === 's') keys.s = false;
   if (k === 'd') keys.d = false;
-  if (e.key === 'Control') keys.ctrl = false;
+  if (e.key === 'Control' || k === 'c') keys.ctrl = false;
   if (k === 'e') keys.e = false;
   updateKeyUI();
 });
