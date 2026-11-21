@@ -43,6 +43,7 @@
   .btn:hover { background: #55eeff; transform: scale(1.04); box-shadow: 0 0 20px #00d2ff; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 
@@ -234,14 +235,32 @@ scene.add(skiff);
 // Drones
 const droneMat = new THREE.MeshStandardMaterial({ color: 0xff3344, emissive: 0x880011 });
 const drones = [
-  { mesh: new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat), x: -12, z: 5, dir: 1, speed: 8 },
-  { mesh: new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat), x: 12, z: -5, dir: -1, speed: 7 }
+  { mesh: new THREE.Group(), x: -12, z: 5, dir: 1, speed: 8 },
+  { mesh: new THREE.Group(), x: 12, z: -5, dir: -1, speed: 7 }
 ];
+
+const gltfLoader = new THREE.GLTFLoader();
+
+// Load realistic Cyberpunk Enemy models
+gltfLoader.load('/Content/Models/Enemy_2Legs.glb', gltf => {
+  drones.forEach(d => {
+    const clone = gltf.scene.clone();
+    clone.scale.set(1.5, 1.5, 1.5);
+    d.mesh.add(clone);
+  });
+}, undefined, err => {
+  // Fallback to sphere if offline
+  drones.forEach(d => {
+    const s = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat);
+    d.mesh.add(s);
+  });
+});
+
 drones.forEach(d => {
-  d.mesh.position.set(d.x, 3.5, d.z);
+  d.mesh.position.set(d.x, 2.5, d.z);
   scene.add(d.mesh);
   const spot = new THREE.SpotLight(0xff3344, 4, 20, Math.PI / 4, 0.5);
-  spot.position.set(0, 0, 0);
+  spot.position.set(0, 3, 0);
   spot.target.position.set(0, -5, 0);
   d.mesh.add(spot);
   d.mesh.add(spot.target);
@@ -249,11 +268,25 @@ drones.forEach(d => {
 });
 
 // Player Character
-const playerGeo = new THREE.CylinderGeometry(0.8, 0.8, 2.4, 12);
-const playerMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.4 });
-const player = new THREE.Mesh(playerGeo, playerMat);
-player.position.set(0, 1.2, 22);
+const player = new THREE.Group();
+player.position.set(0, 0, 22);
 scene.add(player);
+
+// Fallback mesh while loading
+const tempPlayerMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.4 });
+const tempPlayer = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.4, 12), tempPlayerMat);
+tempPlayer.position.y = 1.2;
+player.add(tempPlayer);
+
+// Load realistic Cyberpunk Character model
+gltfLoader.load('/Content/Models/Character.glb', gltf => {
+  player.remove(tempPlayer);
+  const charModel = gltf.scene;
+  charModel.scale.set(1.6, 1.6, 1.6);
+  charModel.position.y = 0;
+  charModel.rotation.y = Math.PI;
+  player.add(charModel);
+});
 
 // Input States
 const keys = { w: false, a: false, s: false, d: false, ctrl: false, e: false, q: false };
