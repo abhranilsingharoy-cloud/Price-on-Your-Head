@@ -1,0 +1,118 @@
+{
+  "project": "PriceOnYourHead",
+  "version": "1.2.0",
+  "assets": [
+    {
+      "file": "Fonts/Orbitron.ttf",
+      "source": "https://fonts.google.com/specimen/Orbitron",
+      "author": "Matt McInerney",
+      "license": "SIL Open Font License (OFL)",
+      "usage": "HUD typography, holographic price displays, deck planning overlay"
+    },
+    {
+      "file": "Textures/T_WetDeck_Roughness.tga",
+      "source": "Procedurally generated PBR roughness map (puddle specular highlights)",
+      "author": "Original procedural texture",
+      "license": "CC0 Public Domain",
+      "usage": "Barge deck floor PBR material wetness"
+    },
+    {
+      "file": "Textures/T_HoloGrid_Cyan.tga",
+      "source": "Procedurally generated holographic scanline grid pattern",
+      "author": "Original procedural texture",
+      "license": "CC0 Public Domain",
+      "usage": "Emissive holographic price tags and deck plan display"
+    },
+    {
+      "file": "Textures/T_Velvet_BaseColor.tga",
+      "source": "Procedurally generated luxury violet velvet cloth texture",
+      "author": "Original procedural texture",
+      "license": "CC0 Public Domain",
+      "usage": "Auction display plinth cloth surface"
+    },
+    {
+      "file": "Models/CryoCanister.obj",
+      "source": "Procedurally generated 3D cylindrical cryo-canister model",
+      "author": "Original 3D geometry",
+      "license": "CC0 Public Domain",
+      "usage": "Lot One: Billionaire's Frozen Head canister"
+    },
+    {
+      "file": "Models/VelvetPlinth.obj",
+      "source": "Procedurally generated 3D octagonal pedestal model",
+      "author": "Original 3D geometry",
+      "license": "CC0 Public Domain",
+      "usage": "Auction display pedestals"
+    },
+    {
+      "file": "Models/CameraDrone.obj",
+      "source": "Procedurally generated 3D security drone chassis model",
+      "author": "Original 3D geometry",
+      "license": "CC0 Public Domain",
+      "usage": "Patrolling aerial camera drone mesh"
+    },
+    {
+      "file": "Models/EscapeSkiff.obj",
+      "source": "Procedurally generated 3D extraction skiff hull model",
+      "author": "Original 3D geometry",
+      "license": "CC0 Public Domain",
+      "usage": "Extraction skiff at barge bow dock"
+    },
+    {
+      "file": "Audio/GavelStrike.wav",
+      "source": "Procedurally generated via script (math.exp decay)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Auction gavel sound at heist launch and timeout"
+    },
+    {
+      "file": "Audio/DroneHum.wav",
+      "source": "Procedurally generated via script (95Hz dual sine)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Camera drone propulsion engine loop"
+    },
+    {
+      "file": "Audio/BiddingWarAlert.wav",
+      "source": "Procedurally generated via script (alternating square/sine)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Bidding war alert audio when drones are blinded"
+    },
+    {
+      "file": "Audio/LotGrabbed.wav",
+      "source": "Procedurally generated via script (ascending sine sweep)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Interactive pickup sound for Lot One and bonus lots"
+    },
+    {
+      "file": "Audio/Footstep_WetMetal.wav",
+      "source": "Procedurally generated via script",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Synchronized footstep audio on wet barge metal deck"
+    },
+    {
+      "file": "Audio/Heartbeat_Tense.wav",
+      "source": "Procedurally generated via script (sub-bass lub-dub)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Tension heartbeat audio when carrying high bounty near drones"
+    },
+    {
+      "file": "Audio/SmokeHiss.wav",
+      "source": "Procedurally generated via script (filtered noise)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Smoke cartridge deployment audio"
+    },
+    {
+      "file": "Audio/RainAmbience.wav",
+      "source": "Procedurally generated via script (filtered ambient noise)",
+      "author": "Synthesized original audio",
+      "license": "CC0 Public Domain",
+      "usage": "Continuous environmental rain on water loop"
+    }
+  ]
+}

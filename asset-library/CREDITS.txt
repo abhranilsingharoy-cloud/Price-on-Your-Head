@@ -1,0 +1,33 @@
+CREDITS & LICENSES - PRICE ON YOUR HEAD
+=========================================
+
+1. Fonts:
+- Orbitron: Designed by Matt McInerney.
+  Licensed under SIL Open Font License, 1.1 (OFL).
+  Full text included in Fonts/OFL.txt.
+
+2. 3D Models & Geometry:
+- Original procedural 3D models (CryoCanister.obj, VelvetPlinth.obj, CameraDrone.obj, EscapeSkiff.obj).
+  Dedicated to the Public Domain under CC0 1.0 Universal.
+
+3. Textures & Shaders:
+- Original procedural PBR textures (T_WetDeck_Roughness.tga, T_HoloGrid_Cyan.tga, T_Velvet_BaseColor.tga).
+  Dedicated to the Public Domain under CC0 1.0 Universal.
+
+4. Audio & Sound Design:
+- Layered soundscape procedurally synthesized in pure Python:
+  - GavelStrike.wav (Auction gavel impact and decay)
+  - DroneHum.wav (95Hz dual sine drone hover)
+  - BiddingWarAlert.wav (Alternating emergency pulse)
+  - LotGrabbed.wav (Holographic pickup confirmation)
+  - Footstep_WetMetal.wav (Wet metal deck footstep)
+  - Heartbeat_Tense.wav (Sub-bass lub-dub stealth tension)
+  - SmokeHiss.wav (LOS obstruction smoke canister)
+  - RainAmbience.wav (Flooded harbor ambient rain loop)
+  Dedicated to the Public Domain under CC0 1.0 Universal.
+
+5. Code & Architecture:
+- Real C++ Unreal Engine 5.8 codebase created for Parsewave Hermes contract.
+- Pure C++ gameplay implementation with zero blueprint dependencies.
+- Procedural level generation via ABargeLevelGenerator.
+- Interactive tactical radar, animated laser tripwires, and input visualizer.
