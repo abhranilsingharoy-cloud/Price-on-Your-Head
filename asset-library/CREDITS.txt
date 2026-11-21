@@ -7,7 +7,10 @@ CREDITS & LICENSES - PRICE ON YOUR HEAD
   Full text included in Fonts/OFL.txt.
 
 2. 3D Models & Geometry:
-- Original procedural 3D models (CryoCanister.obj, VelvetPlinth.obj, CameraDrone.obj, EscapeSkiff.obj).
+- Character.glb, Enemy_2Legs.glb, Computer.glb:
+  Created by Quaternius (Cyberpunk Game Kit).
+  Licensed under CC0 1.0 Universal (Public Domain Dedication).
+- Procedural 3D geometry: CryoCanister.obj, VelvetPlinth.obj, CameraDrone.obj, EscapeSkiff.obj.
   Dedicated to the Public Domain under CC0 1.0 Universal.
 
 3. Textures & Shaders:

@@ -1,6 +1,6 @@
 {
   "project": "PriceOnYourHead",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "assets": [
     {
       "file": "Fonts/Orbitron.ttf",
@@ -29,6 +29,27 @@
       "author": "Original procedural texture",
       "license": "CC0 Public Domain",
       "usage": "Auction display plinth cloth surface"
+    },
+    {
+      "file": "Models/Character.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase / Quaternius Cyberpunk Game Kit",
+      "author": "Quaternius",
+      "license": "CC0 1.0 Universal Public Domain",
+      "usage": "Auction porter hero 3D model"
+    },
+    {
+      "file": "Models/Enemy_2Legs.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase / Quaternius Cyberpunk Game Kit",
+      "author": "Quaternius",
+      "license": "CC0 1.0 Universal Public Domain",
+      "usage": "Security robotic patrol 3D model"
+    },
+    {
+      "file": "Models/Computer.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase / Quaternius Cyberpunk Game Kit",
+      "author": "Quaternius",
+      "license": "CC0 1.0 Universal Public Domain",
+      "usage": "Auction plinth computer terminal prop"
     },
     {
       "file": "Models/CryoCanister.obj",

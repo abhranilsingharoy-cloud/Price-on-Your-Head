@@ -96,6 +96,9 @@ All assets comply strictly with Parsewave's commercial redistribution guidelines
 | Asset File | Type | Source / Provenance | License |
 |---|---|---|---|
 | `Fonts/Orbitron.ttf` | Typography | Matt McInerney via Google Fonts | SIL Open Font License 1.1 |
+| `Models/Character.glb` | 3D Mesh | Quaternius Cyberpunk Game Kit | CC0 1.0 Universal |
+| `Models/Enemy_2Legs.glb` | 3D Mesh | Quaternius Cyberpunk Game Kit | CC0 1.0 Universal |
+| `Models/Computer.glb` | 3D Mesh | Quaternius Cyberpunk Game Kit | CC0 1.0 Universal |
 | `Models/CryoCanister.obj` | 3D Mesh | Procedural cylinder geometry (Lot One) | CC0 1.0 Universal |
 | `Models/CameraDrone.obj` | 3D Mesh | Procedural quad-rotor security drone | CC0 1.0 Universal |
 | `Models/VelvetPlinth.obj` | 3D Mesh | Procedural octagonal display pedestal | CC0 1.0 Universal |
