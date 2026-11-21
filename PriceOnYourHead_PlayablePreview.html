@@ -43,7 +43,6 @@
   .btn:hover { background: #55eeff; transform: scale(1.04); box-shadow: 0 0 20px #00d2ff; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 
@@ -91,7 +90,7 @@
     • <b>Q</b> to start a Bidding War with your decoy paddle (blinds drones for 4s)<br>
     • <b>F</b> to toggle Fullscreen (best for clean 1080p recording)<br>
     • Escape via the <b>Green Skiff</b> at the bow before the final gavel strikes!</p>
-    <button class="btn" id="start-btn">INFILTRATE BARGE (FULLSCREEN)</button>
+    <button class="btn" id="start-btn" onclick="startGame()">INFILTRATE BARGE</button>
   </div>
 </div>
 
@@ -461,27 +460,38 @@ let totalHaul = 0;
 let hasLotOne = false;
 let biddingWarTimer = 0;
 
-document.getElementById('start-btn').addEventListener('click', () => {
-  initAudio();
-  playGavel();
-  try {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    }
-  } catch(err) {}
-  document.getElementById('modal').style.display = 'none';
+window.startGame = function() {
+  const modal = document.getElementById('modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
   gameState = 'playing';
-});
+
+  // Safe Audio
+  try {
+    initAudio();
+    playGavel();
+  } catch (err) {
+    console.log('Audio disabled:', err);
+  }
+};
+
+document.getElementById('start-btn').addEventListener('click', window.startGame);
 
 window.addEventListener('keydown', e => {
-  if (e.key.toLowerCase() === 'f') {
+  const k = e.key.toLowerCase();
+  if (gameState === 'ready' && (e.key === 'Enter' || e.key === ' ' || k === 'f')) {
+    window.startGame();
+    return;
+  }
+  if (k === 'f') {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
+      try { document.documentElement.requestFullscreen().catch(()=>{}); } catch(e){}
     } else {
-      document.exitFullscreen();
+      try { document.exitFullscreen().catch(()=>{}); } catch(e){}
     }
   }
-  if (e.key.toLowerCase() === 'r' && gameState !== 'playing') {
+  if (k === 'r' && gameState !== 'playing') {
     location.reload();
   }
 });
