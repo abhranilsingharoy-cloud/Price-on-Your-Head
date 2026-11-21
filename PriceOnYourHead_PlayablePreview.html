@@ -162,54 +162,179 @@ const redAccent = new THREE.PointLight(0xff2244, 2, 40);
 redAccent.position.set(0, 15, -20);
 scene.add(redAccent);
 
-// Barge Deck Floor
-const deckGeo = new THREE.BoxGeometry(40, 1, 60);
-const deckMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
+// ==========================================
+// 1. High-Detail Ground, Barge Deck & Dynamic Water
+// ==========================================
+
+// Procedural Diamond-Plate Steel Deck Canvas Texture
+const deckCanvas = document.createElement('canvas');
+deckCanvas.width = 512;
+deckCanvas.height = 512;
+const dctx = deckCanvas.getContext('2d');
+dctx.fillStyle = '#141a26';
+dctx.fillRect(0, 0, 512, 512);
+
+// Metal Plate Grid & Rivets
+dctx.strokeStyle = '#222d42';
+dctx.lineWidth = 4;
+for (let i = 0; i < 512; i += 64) {
+  dctx.strokeRect(i, 0, 64, 512);
+  dctx.strokeRect(0, i, 512, 64);
+}
+// Hazard Border Caution Stripes (Yellow / Black)
+dctx.fillStyle = '#ffcc00';
+for (let i = 0; i < 512; i += 32) {
+  dctx.beginPath();
+  dctx.moveTo(i, 0); dctx.lineTo(i + 16, 0); dctx.lineTo(i + 32, 24); dctx.lineTo(i + 16, 24); dctx.fill();
+  dctx.beginPath();
+  dctx.moveTo(i, 488); dctx.lineTo(i + 16, 488); dctx.lineTo(i + 32, 512); dctx.lineTo(i + 16, 512); dctx.fill();
+}
+
+const deckTexture = new THREE.CanvasTexture(deckCanvas);
+deckTexture.wrapS = THREE.RepeatWrapping;
+deckTexture.wrapT = THREE.RepeatWrapping;
+deckTexture.repeat.set(6, 9);
+
+const deckGeo = new THREE.BoxGeometry(40, 1.2, 60);
+const deckMat = new THREE.MeshStandardMaterial({
+  map: deckTexture,
+  roughness: 0.35,
+  metalness: 0.75
+});
 const deck = new THREE.Mesh(deckGeo, deckMat);
-deck.position.y = -0.5;
+deck.position.y = -0.6;
+deck.receiveShadow = true;
 scene.add(deck);
 
-// Flooded Water Plane
-const waterGeo = new THREE.PlaneGeometry(200, 200);
-const waterMat = new THREE.MeshStandardMaterial({ color: 0x051525, roughness: 0.1, metalness: 0.9 });
+// Flooded Harbor Water with Wave Geometry
+const waterGeo = new THREE.PlaneGeometry(240, 240, 32, 32);
+const waterMat = new THREE.MeshStandardMaterial({
+  color: 0x061424,
+  roughness: 0.1,
+  metalness: 0.92,
+  transparent: true,
+  opacity: 0.94
+});
 const water = new THREE.Mesh(waterGeo, waterMat);
 water.rotation.x = -Math.PI / 2;
-water.position.y = -0.8;
+water.position.y = -0.9;
 scene.add(water);
 
-// Railings
-const railMat = new THREE.MeshStandardMaterial({ color: 0x00a8cc, emissive: 0x004466 });
+// Industrial Safety Railings with Strobe Beacons
+const railMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, emissive: 0x004466, metalness: 0.8 });
 function addRail(x, z, w, d) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1.2, d), railMat);
-  mesh.position.set(x, 0.6, z);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1.4, d), railMat);
+  mesh.position.set(x, 0.7, z);
   scene.add(mesh);
+  
+  // Neon Corner Beacon
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+  beacon.position.set(x, 1.6, z);
+  scene.add(beacon);
 }
-addRail(-19.5, 0, 1, 60);
-addRail(19.5, 0, 1, 60);
-addRail(0, 29.5, 40, 1);
-addRail(-10, -29.5, 20, 1); // Opening for skiff at +Z
+addRail(-19.5, 0, 0.8, 60);
+addRail(19.5, 0, 0.8, 60);
+addRail(0, 29.5, 40, 0.8);
+addRail(-10, -29.5, 20, 0.8); // Boarding gap at bow for skiff
 
-// Plinths
-const plinthMat = new THREE.MeshStandardMaterial({ color: 0x220b38, roughness: 0.8 });
+// Tactical Stealth Cover Props (Cyberpunk Shipping Crates & Barrels)
+const crateMat = new THREE.MeshStandardMaterial({ color: 0x1b2838, roughness: 0.6, metalness: 0.4 });
+function addCrateStack(x, z, h) {
+  const c = new THREE.Mesh(new THREE.BoxGeometry(2.4, h, 2.4), crateMat);
+  c.position.set(x, h * 0.5, z);
+  scene.add(c);
+}
+addCrateStack(-14, 18, 3.0);
+addCrateStack(-14, -18, 2.5);
+addCrateStack(14, 18, 2.6);
+addCrateStack(14, -18, 3.2);
+addCrateStack(-6, 26, 2.2);
+
+// ==========================================
+// 2. High-Detail Pedestals & Cryo-Canister Prize (Lot One)
+// ==========================================
 const plinths = [];
 
 function createPlinth(x, z, isLotOne, val) {
-  const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 1.8, 8), plinthMat);
-  pMesh.position.set(x, 0.9, z);
-  scene.add(pMesh);
+  const plinthGroup = new THREE.Group();
+  plinthGroup.position.set(x, 0, z);
 
-  // Lot item
-  const itemGeo = isLotOne ? new THREE.CylinderGeometry(0.8, 0.8, 2.0, 16) : new THREE.SphereGeometry(0.8, 12, 12);
-  const itemMat = new THREE.MeshStandardMaterial({
-    color: isLotOne ? 0x00ffff : 0xffaa00,
-    emissive: isLotOne ? 0x0088aa : 0xaa5500,
-    roughness: 0.2
-  });
-  const item = new THREE.Mesh(itemGeo, itemMat);
-  item.position.set(x, 2.5, z);
-  scene.add(item);
+  // Hexagonal Base with Gold Trim
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x180b26, roughness: 0.7 });
+  const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.2, 1.6, 6), baseMat);
+  baseMesh.position.y = 0.8;
+  plinthGroup.add(baseMesh);
 
-  plinths.push({ x, z, isLotOne, val, mesh: item, taken: false });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 });
+  const trimRing = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 0.15, 6), trimMat);
+  trimRing.position.y = 1.6;
+  plinthGroup.add(trimRing);
+
+  let itemGroup = new THREE.Group();
+
+  if (isLotOne) {
+    // --- Lot One: The Billionaire's Frozen Head Cryo-Canister ---
+    // Outer Cryo Glass Pod
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x88eeff,
+      transparent: true,
+      opacity: 0.55,
+      roughness: 0.05,
+      metalness: 0.2
+    });
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 2.2, 16), glassMat);
+    glass.position.y = 2.7;
+    itemGroup.add(glass);
+
+    // Inner Glowing Cryo Liquid
+    const fluidMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.45 });
+    const fluid = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 2.0, 16), fluidMat);
+    fluid.position.y = 2.7;
+    itemGroup.add(fluid);
+
+    // Sculpted 3D Frozen Skull / Head floating inside
+    const headMat = new THREE.MeshStandardMaterial({ color: 0x99ddff, roughness: 0.3, metalness: 0.5 });
+    const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), headMat);
+    cranium.position.set(0, 2.85, 0);
+    const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), headMat);
+    jaw.position.set(0, 2.55, 0.1);
+    const cyberEye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff0044 }));
+    cyberEye.position.set(0.15, 2.85, 0.38);
+    itemGroup.add(cranium);
+    itemGroup.add(jaw);
+    itemGroup.add(cyberEye);
+
+    // Chrome Top & Bottom Pressure Caps
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x334455, metalness: 0.9, roughness: 0.2 });
+    const botCap = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.3, 16), capMat);
+    botCap.position.y = 1.65;
+    const topCap = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.3, 16), capMat);
+    topCap.position.y = 3.85;
+    itemGroup.add(botCap);
+    itemGroup.add(topCap);
+
+    // Floating Emissive Hologram Label
+    const holoLight = new THREE.PointLight(0x00ffff, 1.5, 6);
+    holoLight.position.set(0, 4.2, 0);
+    itemGroup.add(holoLight);
+
+  } else {
+    // --- Bonus Loot: Golden Biometric Core / Neural Drive ---
+    const bonusMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x773300, roughness: 0.2, metalness: 0.8 });
+    const core = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7, 0), bonusMat);
+    core.position.y = 2.4;
+    itemGroup.add(core);
+
+    const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.04, 6, 16), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+    orbitRing.rotation.x = Math.PI / 3;
+    orbitRing.position.y = 2.4;
+    itemGroup.add(orbitRing);
+  }
+
+  plinthGroup.add(itemGroup);
+  scene.add(plinthGroup);
+
+  plinths.push({ x, z, isLotOne, val, mesh: itemGroup, taken: false });
 }
 
 createPlinth(0, 0, true, 1000000);   // Lot One Center
@@ -220,17 +345,59 @@ createPlinth(10, -12, false, 400000); // Bonus D
 
 // Laser Tripwires
 const laserMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-const laserGeo = new THREE.CylinderGeometry(0.04, 0.04, 18, 8);
+const laserGeo = new THREE.CylinderGeometry(0.05, 0.05, 18, 8);
 const laser1 = new THREE.Mesh(laserGeo, laserMat);
 laser1.rotation.z = Math.PI / 2;
 laser1.position.set(0, 1.2, 8);
 scene.add(laser1);
 
-// Escape Skiff (Positioned right at the deck boarding ramp)
-const skiffMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x008844 });
-const skiff = new THREE.Mesh(new THREE.BoxGeometry(8, 1.4, 10), skiffMat);
-skiff.position.set(10, 0.2, -28.5);
-scene.add(skiff);
+// ==========================================
+// 3. High-Detail Stealth Escape Skiff (Speedboat)
+// ==========================================
+const skiffGroup = new THREE.Group();
+skiffGroup.position.set(10, 0.1, -28.5);
+
+// Chiseled Stealth Hull (V-Shape Bow)
+const hullMat = new THREE.MeshStandardMaterial({ color: 0x0d1822, metalness: 0.8, roughness: 0.3 });
+const hull = new THREE.Mesh(new THREE.BoxGeometry(6.5, 1.4, 11), hullMat);
+hull.position.y = 0.4;
+skiffGroup.add(hull);
+
+// Neon Emerald Deck Trim
+const trimMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00aa55 });
+const boatTrim = new THREE.Mesh(new THREE.BoxGeometry(6.7, 0.2, 11.2), trimMat);
+boatTrim.position.y = 1.1;
+skiffGroup.add(boatTrim);
+
+// Slanted Tinted Windshield
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.65 });
+const windshield = new THREE.Mesh(new THREE.BoxGeometry(5.5, 1.0, 0.2), glassMat);
+windshield.rotation.x = -Math.PI / 6;
+windshield.position.set(0, 1.6, 2.0);
+skiffGroup.add(windshield);
+
+// Twin Outboard High-Performance Jet Thrusters at Stern
+const engineMat = new THREE.MeshStandardMaterial({ color: 0x223344, metalness: 0.9 });
+[-2.0, 2.0].forEach(ex => {
+  const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.0, 12), engineMat);
+  engine.rotation.x = Math.PI / 2;
+  engine.position.set(ex, 0.5, -5.5);
+  skiffGroup.add(engine);
+
+  // Glowing Green Wake Jets
+  const jet = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.5, 8), new THREE.MeshBasicMaterial({ color: 0x00ff88 }));
+  jet.rotation.x = -Math.PI / 2;
+  jet.position.set(ex, 0.5, -7.0);
+  skiffGroup.add(jet);
+});
+
+// Boarding Beacon Indicator
+const dockLight = new THREE.PointLight(0x00ff88, 2.5, 12);
+dockLight.position.set(0, 2.2, 0);
+skiffGroup.add(dockLight);
+
+scene.add(skiffGroup);
+const skiff = skiffGroup;
 
 // High-Detail Futuristic Security Drone Builder
 function buildRealisticDrone(colorHex, emissiveHex) {
@@ -365,12 +532,30 @@ function buildCyberpunkPorter() {
   const coat = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.8), coatMat);
   coat.position.y = 1.35;
   charGroup.add(coat);
+  charGroup.torso = coat;
 
   // Neon Cyan Trim / Armor Plates
   const armorMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, emissive: 0x004466, roughness: 0.2 });
   const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.2), armorMat);
   chestPlate.position.set(0, 1.45, 0.42);
   charGroup.add(chestPlate);
+
+  // Tactical Backpack (where stolen cryo canister docks!)
+  const packMat = new THREE.MeshStandardMaterial({ color: 0x0c121c, metalness: 0.8 });
+  const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.1, 0.4), packMat);
+  backpack.position.set(0, 1.45, -0.55);
+  charGroup.add(backpack);
+
+  // Stolen Canister attached to back (initially hidden, shows upon Lot One theft)
+  const dockedCanister = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.35, 0.35, 1.4, 12),
+    new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x0088aa, roughness: 0.1 })
+  );
+  dockedCanister.rotation.z = Math.PI / 4;
+  dockedCanister.position.set(0, 1.5, -0.8);
+  dockedCanister.visible = false;
+  charGroup.add(dockedCanister);
+  charGroup.dockedCanister = dockedCanister;
 
   // Helmet with Glowing Cyan Visor
   const helmetMat = new THREE.MeshStandardMaterial({ color: 0x0a101d, metalness: 0.85, roughness: 0.2 });
@@ -383,31 +568,50 @@ function buildCyberpunkPorter() {
   visor.position.set(0, 2.38, 0.44);
   charGroup.add(visor);
 
-  // Left & Right Arms
+  // Articulated Arms (Pivot at shoulder y = 1.9)
   const armMat = new THREE.MeshStandardMaterial({ color: 0x111622 });
-  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.1, 0.35), armMat);
-  leftArm.position.set(-0.85, 1.25, 0);
-  charGroup.add(leftArm);
 
-  const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.1, 0.35), armMat);
-  rightArm.position.set(0.85, 1.25, 0);
-  charGroup.add(rightArm);
+  const leftArmPivot = new THREE.Group();
+  leftArmPivot.position.set(-0.85, 1.85, 0);
+  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.0, 0.35), armMat);
+  leftArm.position.y = -0.5;
+  leftArmPivot.add(leftArm);
+  charGroup.add(leftArmPivot);
+  charGroup.leftArm = leftArmPivot;
 
-  // Right Hand: Decoy Paddle / Scanner Prop
+  const rightArmPivot = new THREE.Group();
+  rightArmPivot.position.set(0.85, 1.85, 0);
+  const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.0, 0.35), armMat);
+  rightArm.position.y = -0.5;
+  rightArmPivot.add(rightArm);
+
+  // Right Hand: Decoy Paddle Prop
   const paddleMat = new THREE.MeshStandardMaterial({ color: 0xff3344, emissive: 0x660011 });
   const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 0.35), paddleMat);
-  paddle.position.set(0.85, 0.7, 0.2);
-  charGroup.add(paddle);
+  paddle.position.set(0, -0.9, 0.2);
+  rightArmPivot.add(paddle);
 
-  // Left & Right Legs
+  charGroup.add(rightArmPivot);
+  charGroup.rightArm = rightArmPivot;
+
+  // Articulated Legs (Pivot at hip y = 1.0)
   const legMat = new THREE.MeshStandardMaterial({ color: 0x0b101a, roughness: 0.8 });
-  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 0.45), legMat);
-  leftLeg.position.set(-0.35, 0.55, 0);
-  charGroup.add(leftLeg);
 
-  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 0.45), legMat);
-  rightLeg.position.set(0.35, 0.55, 0);
-  charGroup.add(rightLeg);
+  const leftLegPivot = new THREE.Group();
+  leftLegPivot.position.set(-0.35, 1.0, 0);
+  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.0, 0.45), legMat);
+  leftLeg.position.y = -0.5;
+  leftLegPivot.add(leftLeg);
+  charGroup.add(leftLegPivot);
+  charGroup.leftLeg = leftLegPivot;
+
+  const rightLegPivot = new THREE.Group();
+  rightLegPivot.position.set(0.35, 1.0, 0);
+  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.0, 0.45), legMat);
+  rightLeg.position.y = -0.5;
+  rightLegPivot.add(rightLeg);
+  charGroup.add(rightLegPivot);
+  charGroup.rightLeg = rightLegPivot;
 
   return charGroup;
 }
@@ -565,6 +769,7 @@ function drawRadar() {
 
 // Main Game Loop
 let lastTime = performance.now();
+let walkTime = 0;
 
 function animate() {
   requestAnimationFrame(animate);
@@ -612,7 +817,34 @@ function animate() {
       player.position.x += moveX * speed * delta;
       player.position.z += moveZ * speed * delta;
       player.rotation.y = Math.atan2(moveX, moveZ);
+
+      // Walking Leg & Arm Swing Animation
+      walkTime += delta * (keys.ctrl ? 8.0 : 14.0);
+      if (porterMesh.leftLeg) {
+        porterMesh.leftLeg.rotation.x = Math.sin(walkTime) * 0.55;
+        porterMesh.rightLeg.rotation.x = -Math.sin(walkTime) * 0.55;
+        porterMesh.leftArm.rotation.x = -Math.sin(walkTime) * 0.45;
+        porterMesh.rightArm.rotation.x = Math.sin(walkTime) * 0.45;
+      }
+    } else {
+      // Idle Pose
+      if (porterMesh.leftLeg) {
+        porterMesh.leftLeg.rotation.x = 0;
+        porterMesh.rightLeg.rotation.x = 0;
+        porterMesh.leftArm.rotation.x = 0;
+        porterMesh.rightArm.rotation.x = 0;
+      }
     }
+
+    // Show stolen Cryo Canister docked on tactical backpack
+    if (porterMesh.dockedCanister) {
+      porterMesh.dockedCanister.visible = hasLotOne;
+    }
+
+    // Dynamic Harbor Water & Speedboat Bobbing Motion
+    water.position.y = -0.9 + Math.sin(now * 0.002) * 0.05;
+    skiff.position.y = 0.15 + Math.sin(now * 0.0025) * 0.08;
+    skiff.rotation.z = Math.sin(now * 0.0018) * 0.03;
 
     player.position.x = Math.max(-18, Math.min(18, player.position.x));
     player.position.z = Math.max(-28, Math.min(28, player.position.z));
