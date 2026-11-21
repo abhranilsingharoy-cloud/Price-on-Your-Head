@@ -233,39 +233,122 @@ const skiff = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 10), skiffMat);
 skiff.position.set(12, 0, -32);
 scene.add(skiff);
 
-// Drones
-const droneMat = new THREE.MeshStandardMaterial({ color: 0xff3344, emissive: 0x880011 });
+// High-Detail Futuristic Security Drone Builder
+function buildRealisticDrone(colorHex, emissiveHex) {
+  const group = new THREE.Group();
+
+  // 1. Central Aerodynamic Fuselage
+  const bodyGeo = new THREE.CylinderGeometry(0.8, 1.2, 0.6, 8);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a2233, roughness: 0.3, metalness: 0.85 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Top Dome with Strobe Beacon
+  const domeGeo = new THREE.SphereGeometry(0.6, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+  const domeMat = new THREE.MeshStandardMaterial({ color: 0x0d1420, metalness: 0.9 });
+  const dome = new THREE.Mesh(domeGeo, domeMat);
+  dome.position.y = 0.3;
+  group.add(dome);
+
+  // Flashing Security Beacon
+  const beaconGeo = new THREE.SphereGeometry(0.18, 8, 8);
+  const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+  const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+  beacon.position.y = 0.9;
+  group.add(beacon);
+  group.beacon = beacon;
+
+  // Front Optical Camera Visor
+  const eyeGeo = new THREE.SphereGeometry(0.35, 12, 12);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+  const eye = new THREE.Mesh(eyeGeo, eyeMat);
+  eye.position.set(0, -0.1, 0.9);
+  group.add(eye);
+  group.eye = eye;
+
+  // 2. 4 Quad-Rotor Arms
+  const armMat = new THREE.MeshStandardMaterial({ color: 0x111722, metalness: 0.8 });
+  const rotors = [];
+  const armOffsets = [
+    { x: 1.6, z: 1.6 },
+    { x: -1.6, z: 1.6 },
+    { x: 1.6, z: -1.6 },
+    { x: -1.6, z: -1.6 }
+  ];
+
+  armOffsets.forEach(pos => {
+    // Strut
+    const armGeo = new THREE.BoxGeometry(0.15, 0.15, 2.3);
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.position.set(pos.x * 0.5, 0, pos.z * 0.5);
+    arm.lookAt(pos.x, 0, pos.z);
+    group.add(arm);
+
+    // Motor Pod & Guard Ring
+    const podGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 8);
+    const pod = new THREE.Mesh(podGeo, armMat);
+    pod.position.set(pos.x, 0, pos.z);
+    group.add(pod);
+
+    const ringGeo = new THREE.TorusGeometry(0.7, 0.05, 6, 16);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x223344, emissive: 0x004466 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(pos.x, 0.1, pos.z);
+    group.add(ring);
+
+    // Spinning Propeller Blades
+    const bladeGeo = new THREE.BoxGeometry(1.2, 0.02, 0.12);
+    const bladeMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+    blade.position.set(pos.x, 0.15, pos.z);
+    group.add(blade);
+    rotors.push(blade);
+  });
+  group.rotors = rotors;
+
+  // 3. Volumetric Searchlight Cone (Visible in air!)
+  const coneGeo = new THREE.ConeGeometry(3.5, 5.0, 16, 1, true);
+  coneGeo.translate(0, -2.5, 0);
+  const coneMat = new THREE.MeshBasicMaterial({
+    color: 0xff2244,
+    transparent: true,
+    opacity: 0.32,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const lightCone = new THREE.Mesh(coneGeo, coneMat);
+  lightCone.position.set(0, 0, 0);
+  group.add(lightCone);
+  group.lightCone = lightCone;
+
+  // 4. Floor Target Projection Ring
+  const floorRingGeo = new THREE.RingGeometry(0.2, 3.5, 32);
+  const floorRingMat = new THREE.MeshBasicMaterial({
+    color: 0xff2244,
+    transparent: true,
+    opacity: 0.55,
+    side: THREE.DoubleSide
+  });
+  const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
+  floorRing.rotation.x = -Math.PI / 2;
+  floorRing.position.set(0, -3.4, 0);
+  group.add(floorRing);
+  group.floorRing = floorRing;
+
+  return group;
+}
+
+// Instantiate Realistic Drones
 const drones = [
-  { mesh: new THREE.Group(), x: -12, z: 5, dir: 1, speed: 8 },
-  { mesh: new THREE.Group(), x: 12, z: -5, dir: -1, speed: 7 }
+  { group: buildRealisticDrone(), x: -11, z: 6, dir: 1, speed: 7.5, hoverOffset: 0 },
+  { group: buildRealisticDrone(), x: 11, z: -6, dir: -1, speed: 7.0, hoverOffset: Math.PI }
 ];
 
-const gltfLoader = new THREE.GLTFLoader();
-
-// Load realistic Cyberpunk Enemy models
-gltfLoader.load('/Content/Models/Enemy_2Legs.glb', gltf => {
-  drones.forEach(d => {
-    const clone = gltf.scene.clone();
-    clone.scale.set(1.5, 1.5, 1.5);
-    d.mesh.add(clone);
-  });
-}, undefined, err => {
-  // Fallback to sphere if offline
-  drones.forEach(d => {
-    const s = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), droneMat);
-    d.mesh.add(s);
-  });
-});
-
 drones.forEach(d => {
-  d.mesh.position.set(d.x, 2.5, d.z);
-  scene.add(d.mesh);
-  const spot = new THREE.SpotLight(0xff3344, 4, 20, Math.PI / 4, 0.5);
-  spot.position.set(0, 3, 0);
-  spot.target.position.set(0, -5, 0);
-  d.mesh.add(spot);
-  d.mesh.add(spot.target);
-  d.spot = spot;
+  d.group.position.set(d.x, 3.6, d.z);
+  scene.add(d.group);
 });
 
 // Player Character
@@ -364,7 +447,12 @@ function triggerDecoyPaddle() {
   biddingWarTimer = 4.0;
   playAlarm();
   document.getElementById('alert-banner').style.display = 'block';
-  drones.forEach(d => d.spot.color.setHex(0xffaa00));
+  drones.forEach(d => {
+    if (d.group && d.group.lightCone) {
+      d.group.lightCone.material.color.setHex(0xffaa00);
+      d.group.floorRing.material.color.setHex(0xffaa00);
+    }
+  });
 }
 
 // Radar Canvas
@@ -375,29 +463,47 @@ function drawRadar() {
   rCtx.clearRect(0, 0, 160, 160);
   const cx = 80, cy = 80;
   
-  // Crosshairs
-  rCtx.strokeStyle = 'rgba(0, 210, 255, 0.3)';
+  // Crosshairs & Radar sweep ring
+  rCtx.strokeStyle = 'rgba(0, 210, 255, 0.25)';
   rCtx.beginPath();
   rCtx.moveTo(0, cy); rCtx.lineTo(160, cy);
   rCtx.moveTo(cx, 0); rCtx.lineTo(cx, 160);
+  rCtx.arc(cx, cy, 60, 0, Math.PI * 2);
   rCtx.stroke();
   
-  // Player
+  // Player dot
   rCtx.fillStyle = '#00ff88';
   rCtx.beginPath(); rCtx.arc(cx, cy, 4, 0, Math.PI * 2); rCtx.fill();
   
   // Plinths
   plinths.forEach(p => {
     if (!p.taken) {
-      rCtx.fillStyle = p.isLotOne ? '#ff3344' : '#ffd700';
+      rCtx.fillStyle = p.isLotOne ? '#00e5ff' : '#ffd700';
       const rx = cx + (p.x - player.position.x) * 2.2;
       const ry = cy + (p.z - player.position.z) * 2.2;
       rCtx.fillRect(rx - 3, ry - 3, 6, 6);
     }
   });
 
+  // Security Drones (Bright Red Pulsing Blips on Radar)
+  drones.forEach(d => {
+    const dx = cx + (d.x - player.position.x) * 2.2;
+    const dy = cy + (d.z - player.position.z) * 2.2;
+    rCtx.fillStyle = biddingWarTimer > 0 ? '#ffaa00' : '#ff0033';
+    rCtx.beginPath();
+    rCtx.arc(dx, dy, 5, 0, Math.PI * 2);
+    rCtx.fill();
+
+    // Drone vision cone on radar
+    rCtx.fillStyle = biddingWarTimer > 0 ? 'rgba(255, 170, 0, 0.2)' : 'rgba(255, 0, 50, 0.25)';
+    rCtx.beginPath();
+    rCtx.moveTo(dx, dy);
+    rCtx.arc(dx, dy, 14, 0, Math.PI * 2);
+    rCtx.fill();
+  });
+
   // Skiff
-  rCtx.fillStyle = '#00ffff';
+  rCtx.fillStyle = '#00ff88';
   const sx = cx + (skiff.position.x - player.position.x) * 2.2;
   const sy = cy + (skiff.position.z - player.position.z) * 2.2;
   rCtx.fillRect(sx - 4, sy - 4, 8, 8);
@@ -428,7 +534,12 @@ function animate() {
       biddingWarTimer -= delta;
       if (biddingWarTimer <= 0) {
         document.getElementById('alert-banner').style.display = 'none';
-        drones.forEach(d => d.spot.color.setHex(0xff3344));
+        drones.forEach(d => {
+          if (d.group && d.group.lightCone) {
+            d.group.lightCone.material.color.setHex(0xff2244);
+            d.group.floorRing.material.color.setHex(0xff2244);
+          }
+        });
       }
     }
 
@@ -471,23 +582,57 @@ function animate() {
       });
     }
 
-    // Drones Patrol & Detection
-    drones.forEach(d => {
+    // Drones Patrol, Hover Animation & Detection
+    drones.forEach((d, idx) => {
       d.z += d.speed * d.dir * delta;
-      if (d.z > 20 || d.z < -20) d.dir *= -1;
-      d.mesh.position.z = d.z;
+      if (d.z > 22 || d.z < -22) d.dir *= -1;
 
-      // Detection
-      if (biddingWarTimer <= 0) {
+      // Realistic Aerodynamic Hover & Tilt
+      const hoverY = 3.6 + Math.sin(now * 0.003 + d.hoverOffset) * 0.35;
+      d.group.position.set(d.x, hoverY, d.z);
+      d.group.rotation.x = d.dir * 0.12; // Slight forward tilt when moving
+
+      // Spin Quad-Rotor Blades
+      if (d.group.rotors) {
+        d.group.rotors.forEach((r, rIdx) => {
+          r.rotation.y += delta * 45 * (rIdx % 2 === 0 ? 1 : -1);
+        });
+      }
+
+      // Flash Security Strobe Beacon
+      if (d.group.beacon) {
+        const strobe = Math.sin(now * 0.015 + idx) > 0.3;
+        d.group.beacon.material.color.setHex(strobe ? 0xff0044 : 0x00d2ff);
+      }
+
+      // Detection & Visual Cone State
+      if (biddingWarTimer > 0) {
+        // Blinded during Bidding War
+        d.group.lightCone.material.color.setHex(0xffaa00);
+        d.group.lightCone.material.opacity = 0.15;
+        d.group.floorRing.material.color.setHex(0xffaa00);
+        d.group.floorRing.material.opacity = 0.25;
+      } else {
         const dist = Math.hypot(player.position.x - d.x, player.position.z - d.z);
-        const detectionRange = (hasLotOne ? 14 : 7) * (keys.ctrl ? 0.55 : 1.0);
+        const detectionRange = (hasLotOne ? 14 : 7.5) * (keys.ctrl ? 0.55 : 1.0);
+
         if (dist < detectionRange) {
-          d.spot.color.setHex(0xff0000);
-          if (dist < 3.0) {
+          // Alert state: bright red cone and pulsing floor ring
+          d.group.lightCone.material.color.setHex(0xff0022);
+          d.group.lightCone.material.opacity = 0.45;
+          d.group.floorRing.material.color.setHex(0xff0000);
+          d.group.floorRing.material.opacity = 0.85;
+
+          // If drone reaches player standing
+          if (dist < 3.2 && !keys.ctrl) {
             endGame(false, "PINNED BY SECURITY DRONES!");
           }
         } else {
-          d.spot.color.setHex(0xff3344);
+          // Normal sweep
+          d.group.lightCone.material.color.setHex(0xff2244);
+          d.group.lightCone.material.opacity = 0.30;
+          d.group.floorRing.material.color.setHex(0xff2244);
+          d.group.floorRing.material.opacity = 0.50;
         }
       }
     });
